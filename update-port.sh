@@ -11,25 +11,19 @@ if [[ ! $PORT =~ "^[0-9]*$" ]]; then
   exit 1
 fi
 
-# install curl if needed
-if [[ ! -f /usr/bin/curl ]]; then
-  echo "installing curl"
-  apk add --no-cache curl
-fi
-
-# give deluge a minute to start if needed
+# wait for deluge to start if needed
 echo "logging in and getting the cookie"
-COOKIE=$(curl --retry ${MAX_RETRIES:-30} --retry-delay ${RETRY_DELAY:-2} --retry-all-errors --silent --show-error --show-headers -H "Content-Type: application/json" -d '{"method": "auth.login", "params": ["'$DELUGE_PASSWORD'"], "id": '$RANDOM'}' http://localhost:8112/json | grep Cookie | cut -d':' -f2)
+COOKIE=$(wget --quiet --output-document - --tries ${MAX_TRIES:-0} --waitretry ${MAX_DELAY:-10} --retry-connrefused --save-headers --header "Content-Type: application/json" --post-data '{"method": "auth.login", "params": [""], "id": '$RANDOM'}' http://localhost:8112/json | grep Cookie)
 if [[ -z "$COOKIE" ]]; then
   echo "login failed"
   exit 1
 fi
 
 # set the incoming port
-HOST_ID=$(curl --silent --show-error -H "cookie: $COOKIE" -H "Content-Type: application/json" -d '{"method": "web.get_hosts", "params": [], "id": '$RANDOM'}' http://localhost:8112/json | cut -d'"' -f4)
+HOST_ID=$(wget --quiet --output-document - --header "${COOKIE#Set-}" --header "Content-Type: application/json" --post-data '{"method": "web.get_hosts", "params": [], "id": '$RANDOM'}' http://localhost:8112/json | cut -d'"' -f4)
 echo -e "connecting the web client to the daemon using host id: $HOST_ID"
-curl --silent --show-error -H "cookie: $COOKIE" -H "Content-Type: application/json" -d '{"method": "web.connect", "params": ["'$HOST_ID'"], "id": '$RANDOM'}' http://localhost:8112/json
+wget --quiet --output-document - --header "${COOKIE#Set-}" --header "Content-Type: application/json" --post-data '{"method": "web.connect", "params": ["'$HOST_ID'"], "id": '$RANDOM'}' http://localhost:8112/json
 echo -e "\nsetting random port option to false"
-curl --silent --show-error -H "cookie: $COOKIE" -H "Content-Type: application/json" -d '{"method": "core.set_config", "params": [{"random_port": false}], "id": '$RANDOM'}' http://localhost:8112/json
+wget --quiet --output-document - --header "${COOKIE#Set-}" --header "Content-Type: application/json" --post-data '{"method": "core.set_config", "params": [{"random_port": false}], "id": '$RANDOM'}' http://localhost:8112/json
 echo -e "\nsetting the port to $PORT"
-curl --silent --show-error -H "cookie: $COOKIE" -H "Content-Type: application/json" -d '{"method": "core.set_config", "params": [{"listen_ports": ['$PORT','$PORT']}], "id": '$RANDOM'}' http://localhost:8112/json
+wget --quiet --output-document - --header "${COOKIE#Set-}" --header "Content-Type: application/json" --post-data '{"method": "core.set_config", "params": [{"listen_ports": ['$PORT','$PORT']}], "id": '$RANDOM'}' http://localhost:8112/json
