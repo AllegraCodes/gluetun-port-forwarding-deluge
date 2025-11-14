@@ -1,0 +1,31 @@
+services:
+  gluetun:
+    container_name: gluetun-deluge
+    image: qmcgaw/gluetun:latest
+    cap_add:
+      - NET_ADMIN
+    environment:
+      # set up gluetun for your provider
+      - VPN_SERVICE_PROVIDER=protonvpn
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=your-private-key
+      - SERVER_COUNTRIES=Switzerland
+      - PORT_FORWARD_ONLY=on
+      # enable gluetun's native port forwarding integration
+      - VPN_PORT_FORWARDING=on
+      - VPN_PORT_FORWARDING_UP_COMMAND=/bin/sh -c "/gluetun/update-port.sh {{PORTS}}"
+      # configure the script
+      - DELUGE_PASSWORD=deluge
+    ports:
+      - 8112:8112
+    restart: unless-stopped
+    volumes:
+      - /your/path/gluetun:/gluetun
+  deluge:
+    container_name: deluge
+    image: lscr.io/linuxserver/deluge:latest
+    network_mode: service:gluetun
+    restart: unless-stopped
+    volumes:
+      - /your/path/downloads:/downloads
+      - /your/path/config:/config
