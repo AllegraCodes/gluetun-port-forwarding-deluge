@@ -19,7 +19,7 @@ fi
 
 # give deluge a minute to start if needed
 echo "logging in and getting the cookie"
-COOKIE=$(curl --retry 30 --retry-delay 2 --retry-all-errors --silent --show-error --show-headers -H "Content-Type: application/json" -d '{"method": "auth.login", "params": ["'$DELUGE_PASSWORD'"], "id": '$RANDOM'}' http://localhost:8112/json | grep Cookie | cut -d':' -f2)
+COOKIE=$(curl --retry ${MAX_RETRIES:-30} --retry-delay ${RETRY_DELAY:-2} --retry-all-errors --silent --show-error --show-headers -H "Content-Type: application/json" -d '{"method": "auth.login", "params": ["'$DELUGE_PASSWORD'"], "id": '$RANDOM'}' http://localhost:8112/json | grep Cookie | cut -d':' -f2)
 if [[ -z "$COOKIE" ]]; then
   echo "login failed"
   exit 1
@@ -27,7 +27,7 @@ fi
 
 # set the incoming port
 HOST_ID=$(curl --silent --show-error -H "cookie: $COOKIE" -H "Content-Type: application/json" -d '{"method": "web.get_hosts", "params": [], "id": '$RANDOM'}' http://localhost:8112/json | cut -d'"' -f4)
-echo -e "connecting to the host with id: $HOST_ID"
+echo -e "connecting the web client to the daemon using host id: $HOST_ID"
 curl --silent --show-error -H "cookie: $COOKIE" -H "Content-Type: application/json" -d '{"method": "web.connect", "params": ["'$HOST_ID'"], "id": '$RANDOM'}' http://localhost:8112/json
 echo -e "\nsetting random port option to false"
 curl --silent --show-error -H "cookie: $COOKIE" -H "Content-Type: application/json" -d '{"method": "core.set_config", "params": [{"random_port": false}], "id": '$RANDOM'}' http://localhost:8112/json
