@@ -13,7 +13,7 @@ fi
 
 # wait for deluge to start if needed
 echo "logging in and getting the cookie"
-COOKIE=$(wget --quiet --output-document - --tries ${MAX_TRIES:-0} --waitretry ${MAX_DELAY:-10} --retry-connrefused --save-headers --header "Content-Type: application/json" --post-data '{"method": "auth.login", "params": [""], "id": '$RANDOM'}' http://localhost:8112/json | grep Cookie)
+COOKIE=$(wget --quiet --output-document - --tries ${MAX_TRIES:-0} --waitretry ${MAX_DELAY:-10} --retry-connrefused --save-headers --header "Content-Type: application/json" --post-data '{"method": "auth.login", "params": ["'$DELUGE_PASSWORD'"], "id": '$RANDOM'}' http://localhost:8112/json | grep Cookie)
 if [[ -z "$COOKIE" ]]; then
   echo "login failed"
   exit 1
