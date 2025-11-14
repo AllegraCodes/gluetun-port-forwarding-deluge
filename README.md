@@ -8,6 +8,7 @@ Gluetun must support native port forwarding integration with your VPN provider. 
 2. Edit the compose file for your environment
     * Configure gluetun for your provider
     * Configure the script with your deluge password
+    * Optional: configure how many times the script will try to connect to deluge, and how long (in seconds) to wait between retries
     * Bind mount a directory to give gluetun access to the script
     * Configure deluge for your environment
 3. Download `update-port.sh` to the bind mounted directory
